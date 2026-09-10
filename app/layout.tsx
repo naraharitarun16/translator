@@ -3,8 +3,8 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Polyglot Chat — Case Study',
-  description: 'A real-time, multilingual chat platform designed to make conversation feel native across language barriers.',
+  title: 'Polyglot — Messages in every language',
+  description: 'A multilingual inbox that helps you understand every incoming message.',
   generator: 'v0.app',
   icons: {
     icon: [
