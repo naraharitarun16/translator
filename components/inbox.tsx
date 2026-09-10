@@ -8,7 +8,6 @@ import {
   LogOut,
   Languages,
   Sparkles,
-  Check,
   CheckCheck,
   Paperclip,
   Smile,
@@ -17,9 +16,8 @@ import {
   MoreVertical,
   ArrowLeft,
 } from 'lucide-react'
-import { authClient } from '@/lib/auth-client'
-import { sendMessage } from '@/app/actions/messages'
-import type { Message } from '@/lib/db/schema'
+import { createClient } from '@/lib/supabase/client'
+import { sendMessage, type Message } from '@/app/actions/messages'
 
 const languages = ['English', 'Hindi', 'Spanish', 'French', 'Japanese', 'Tamil', 'German']
 
@@ -46,15 +44,15 @@ type ConversationMessage = {
 function buildConversations(messages: Message[]): Conversation[] {
   const groups = new Map<string, Conversation>()
   for (const msg of messages) {
-    const key = msg.direction === 'outbound' ? msg.recipientEmail : msg.senderHandle
+    const key = msg.direction === 'outbound' ? msg.recipient_email : msg.sender_handle
     const existing = groups.get(key)
     const cm: ConversationMessage = {
       id: msg.id,
       text: msg.body,
-      translatedText: msg.translatedBody,
+      translatedText: msg.translated_body,
       isOutbound: msg.direction === 'outbound',
-      sourceLanguage: msg.sourceLanguage,
-      createdAt: msg.createdAt,
+      sourceLanguage: msg.source_language,
+      createdAt: new Date(msg.created_at),
     }
     if (existing) {
       existing.messages.push(cm)
@@ -65,9 +63,9 @@ function buildConversations(messages: Message[]): Conversation[] {
     } else {
       groups.set(key, {
         id: key,
-        name: msg.direction === 'outbound' ? msg.recipientName : msg.senderName,
-        handle: msg.direction === 'outbound' ? msg.recipientEmail : msg.senderHandle,
-        avatar: msg.direction === 'outbound' ? msg.recipientName.charAt(0) : msg.senderName.charAt(0),
+        name: msg.direction === 'outbound' ? msg.recipient_name : msg.sender_name,
+        handle: msg.direction === 'outbound' ? msg.recipient_email : msg.sender_handle,
+        avatar: msg.direction === 'outbound' ? msg.recipient_name.charAt(0) : msg.sender_name.charAt(0),
         isOutbound: msg.direction === 'outbound',
         lastMessage: cm.translatedText || cm.text,
         sourceLanguage: cm.sourceLanguage,
@@ -174,10 +172,10 @@ export function Inbox({ messages: initialMessages, userName }: { messages: Messa
       const newCm: ConversationMessage = {
         id: msg.id,
         text: msg.body,
-        translatedText: msg.translatedBody,
+        translatedText: msg.translated_body,
         isOutbound: true,
-        sourceLanguage: msg.sourceLanguage,
-        createdAt: msg.createdAt,
+        sourceLanguage: msg.source_language,
+        createdAt: new Date(msg.created_at),
       }
       const existing = conversations.find((c) => c.id === recipientEmail)
       if (existing) {
@@ -404,7 +402,7 @@ export function Inbox({ messages: initialMessages, userName }: { messages: Messa
       {/* User menu floating */}
       <div className="tg-user-float">
         <span className="tg-user-name">{userName}</span>
-        <button className="tg-icon-btn" aria-label="Log out" onClick={() => authClient.signOut().then(() => (location.href = '/sign-in'))}>
+        <button className="tg-icon-btn" aria-label="Log out" onClick={async () => { const supabase = createClient(); await supabase.auth.signOut(); location.href = '/sign-in' }}>
           <LogOut size={18} />
         </button>
       </div>
