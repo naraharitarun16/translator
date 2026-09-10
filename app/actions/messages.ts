@@ -1,6 +1,5 @@
 'use server'
 
-import { generateText } from 'ai'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { messages } from '@/lib/db/schema'
@@ -14,12 +13,18 @@ async function getUserId() {
 }
 
 async function translateText(text: string, targetLanguage: string) {
-  const result = await generateText({
-    model: 'openai/gpt-4.1-mini',
-    system: 'You are a precise translation engine. Return only the translated text, with no quotes, notes, or explanation.',
-    prompt: `Translate this message into ${targetLanguage}:\n\n${text}`,
+  const languageCodes: Record<string, string> = { English: 'en', Hindi: 'hi', Spanish: 'es', French: 'fr', Japanese: 'ja', Tamil: 'ta', German: 'de' }
+  const targetCode = languageCodes[targetLanguage] || targetLanguage
+  const params = new URLSearchParams({ q: text, langpair: `autodetect|${targetCode}`, mt: '1' })
+  const response = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(15000),
   })
-  return result.text.trim()
+  if (!response.ok) throw new Error('Free translation service unavailable')
+  const result = (await response.json()) as { responseData?: { translatedText?: string }; responseStatus?: number }
+  const translated = result.responseData?.translatedText?.trim()
+  if (!translated || result.responseStatus !== 200) throw new Error('Translation failed')
+  return translated
 }
 
 export async function getMessages() {

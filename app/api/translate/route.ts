@@ -6,12 +6,14 @@ export async function POST(request: Request) {
     const text = typeof payload.text === 'string' ? payload.text.trim() : ''
     const targetLanguage = typeof payload.targetLanguage === 'string' ? payload.targetLanguage.trim() : ''
     if (!text || !targetLanguage) return NextResponse.json({ error: 'Enter a message and choose a language.' }, { status: 400 })
+    const languageCodes: Record<string, string> = {
+      English: 'en', Hindi: 'hi', Spanish: 'es', French: 'fr', Japanese: 'ja', Tamil: 'ta', German: 'de',
+      en: 'en', hi: 'hi', es: 'es', fr: 'fr', ja: 'ja', ta: 'ta', de: 'de',
+    }
     const sourceLanguage = typeof payload.sourceLanguage === 'string' ? payload.sourceLanguage.trim() : 'auto'
-    const params = new URLSearchParams({
-      q: text,
-      langpair: `${sourceLanguage === 'auto' ? 'autodetect' : sourceLanguage}|${targetLanguage}`,
-      mt: '1',
-    })
+    const sourceCode = sourceLanguage === 'auto' ? 'autodetect' : languageCodes[sourceLanguage] || sourceLanguage
+    const targetCode = languageCodes[targetLanguage] || targetLanguage
+    const params = new URLSearchParams({ q: text, langpair: `${sourceCode}|${targetCode}`, mt: '1' })
     const response = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`, {
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(15000),
