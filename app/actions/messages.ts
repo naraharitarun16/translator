@@ -32,7 +32,7 @@ async function translateText(text: string, targetLanguage: string) {
 }
 
 export async function getMessages() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 
@@ -85,7 +85,7 @@ export async function sendMessage(input: {
   sourceLanguage: string
   targetLanguage: string
 }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Unauthorized')
 

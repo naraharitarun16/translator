@@ -4,7 +4,7 @@ import { getMessages } from '@/app/actions/messages'
 import { Inbox } from '@/components/inbox'
 
 export default async function Page() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/sign-in')
   const messages = await getMessages()
