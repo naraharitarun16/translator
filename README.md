@@ -37,7 +37,12 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to 
 
 ### Environment variables
 
-Supabase credentials (`SUPABASE_URL`, `SUPABASE_ANON_KEY`, etc.) are pre-populated in `.env`. No additional setup is required to run the app.
+Create a local `.env.local` file with these variables from your Supabase project (Project Settings → API):
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+Do not commit `.env`, `.env.local`, service-role keys, or other secrets. Apply the SQL migration in `supabase/migrations/` to your Supabase database before using messaging.
 
 ## Project Structure
 

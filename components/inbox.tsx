@@ -56,10 +56,6 @@ function buildConversations(messages: Message[]): Conversation[] {
     }
     if (existing) {
       existing.messages.push(cm)
-      if (cm.createdAt > existing.messages[existing.messages.length - 2].createdAt) {
-        existing.lastMessage = cm.translatedText || cm.text
-        existing.sourceLanguage = cm.sourceLanguage
-      }
     } else {
       groups.set(key, {
         id: key,
@@ -73,9 +69,19 @@ function buildConversations(messages: Message[]): Conversation[] {
       })
     }
   }
+
+  for (const conversation of groups.values()) {
+    conversation.messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    const latest = conversation.messages[conversation.messages.length - 1]
+    if (latest) {
+      conversation.lastMessage = latest.translatedText || latest.text
+      conversation.sourceLanguage = latest.sourceLanguage
+    }
+  }
+
   return Array.from(groups.values()).sort((a, b) => {
-    const aTime = a.messages[a.messages.length - 1].createdAt.getTime()
-    const bTime = b.messages[b.messages.length - 1].createdAt.getTime()
+    const aTime = a.messages[a.messages.length - 1]?.createdAt.getTime() ?? 0
+    const bTime = b.messages[b.messages.length - 1]?.createdAt.getTime() ?? 0
     return bTime - aTime
   })
 }

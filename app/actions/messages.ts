@@ -16,10 +16,11 @@ export type Message = {
   created_at: string
 }
 
-async function translateText(text: string, targetLanguage: string) {
+async function translateText(text: string, sourceLanguage: string, targetLanguage: string) {
   const languageCodes: Record<string, string> = { English: 'en', Hindi: 'hi', Spanish: 'es', French: 'fr', Japanese: 'ja', Tamil: 'ta', German: 'de' }
+  const sourceCode = languageCodes[sourceLanguage] || 'autodetect'
   const targetCode = languageCodes[targetLanguage] || targetLanguage
-  const params = new URLSearchParams({ q: text, langpair: `autodetect|${targetCode}`, mt: '1' })
+  const params = new URLSearchParams({ q: text, langpair: `${sourceCode}|${targetCode}`, mt: '1' })
   const response = await fetch(`https://api.mymemory.translated.net/get?${params.toString()}`, {
     headers: { Accept: 'application/json' },
     signal: AbortSignal.timeout(15000),
@@ -94,7 +95,7 @@ export async function sendMessage(input: {
     throw new Error('Complete all message fields')
   }
 
-  const translated = await translateText(text, input.targetLanguage)
+  const translated = await translateText(text, input.sourceLanguage, input.targetLanguage)
   const userName = (user.user_metadata as { name?: string })?.name || 'You'
 
   const row = {

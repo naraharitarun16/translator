@@ -16,33 +16,32 @@ export function AuthForm({ mode }: { mode: 'sign-in' | 'sign-up' }) {
     event.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
 
-    if (mode === 'sign-up') {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { name } },
-      })
-      if (signUpError) {
-        setError(signUpError.message)
-        setLoading(false)
-        return
+    try {
+      const supabase = createClient()
+
+      if (mode === 'sign-up') {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name } },
+        })
+        if (signUpError) throw signUpError
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (signInError) throw signInError
       }
-    } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (signInError) {
-        setError(signInError.message)
-        setLoading(false)
-        return
-      }
+
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
