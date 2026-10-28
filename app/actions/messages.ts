@@ -16,6 +16,16 @@ export type Message = {
   created_at: string
 }
 
+function logSupabaseError(context: string, error: { message?: string; code?: string; details?: string; hint?: string } | null) {
+  if (!error) return
+  console.error(`[supabase:${context}]`, {
+    message: error.message,
+    code: error.code,
+    details: error.details,
+    hint: error.hint,
+  })
+}
+
 async function translateText(text: string, sourceLanguage: string, targetLanguage: string) {
   const languageCodes: Record<string, string> = { English: 'en', Hindi: 'hi', Spanish: 'es', French: 'fr', Japanese: 'ja', Tamil: 'ta', German: 'de' }
   const sourceCode = languageCodes[sourceLanguage] || 'autodetect'
@@ -34,7 +44,11 @@ async function translateText(text: string, sourceLanguage: string, targetLanguag
 
 export async function getMessages() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError) {
+    logSupabaseError('getUser', authError)
+    throw new Error('Authentication session is invalid. Please sign in again.')
+  }
   if (!user) throw new Error('Unauthorized')
 
   const { data, error } = await supabase
@@ -42,7 +56,10 @@ export async function getMessages() {
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (error) throw new Error('Failed to load messages')
+  if (error) {
+    logSupabaseError('select_messages', error)
+    throw new Error(`Failed to load messages: ${error.message}`)
+  }
   if (data && data.length > 0) return data as Message[]
 
   const seeded = [
@@ -75,7 +92,10 @@ export async function getMessages() {
   ]
 
   const { error: insertError } = await supabase.from('message').insert(seeded)
-  if (insertError) throw new Error('Failed to seed messages')
+  if (insertError) {
+    logSupabaseError('insert_seed_messages', insertError)
+    throw new Error(`Failed to seed messages: ${insertError.message}`)
+  }
   return seeded as Message[]
 }
 
@@ -87,7 +107,11 @@ export async function sendMessage(input: {
   targetLanguage: string
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError) {
+    logSupabaseError('getUser', authError)
+    throw new Error('Authentication session is invalid. Please sign in again.')
+  }
   if (!user) throw new Error('Unauthorized')
 
   const text = input.text.trim()
@@ -113,6 +137,9 @@ export async function sendMessage(input: {
   }
 
   const { data, error } = await supabase.from('message').insert(row).select().single()
-  if (error) throw new Error('Failed to send message')
+  if (error) {
+    logSupabaseError('insert_message', error)
+    throw new Error(`Failed to send message: ${error.message}`)
+  }
   return data as Message
 }
