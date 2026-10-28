@@ -1,10 +1,10 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-function getEnv(name: string): string {
-  const value = process.env[name]
+function getEnv(primary: string, fallback: string): string {
+  const value = process.env[primary] || process.env[fallback]
   if (!value) {
-    console.error(`[supabase] Missing environment variable: ${name}`)
+    console.error(`[supabase] Missing environment variable: ${primary} (or fallback ${fallback})`)
     return ''
   }
   return value
@@ -13,8 +13,8 @@ function getEnv(name: string): string {
 export async function createClient() {
   const cookieStore = await cookies()
   return createServerClient(
-    getEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    getEnv('NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_URL'),
+    getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY'),
     {
       cookies: {
         getAll() {
